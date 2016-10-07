@@ -1,0 +1,13 @@
+The URI classloader was written by Dawid Kurzyniec ( edu.emory.mathcs.util.classloader)
+and was released into the public domain.
+
+See also
+
+Dawid Kurzyniec, Vaidy S. Sunderam
+Flexible Class Loader Framework: Sharing Java Resources in Harness System
+Proceeding
+ICCS '01 Proceedings of the International Conference on Computational Sciences-Part I
+Pages 375-384
+Springer-Verlag London, UK
+2001
+ISBN 3-540-42232-3
