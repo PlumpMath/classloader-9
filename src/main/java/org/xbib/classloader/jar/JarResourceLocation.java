@@ -3,21 +3,15 @@ package org.xbib.classloader.jar;
 import org.xbib.classloader.AbstractURLResourceLocation;
 import org.xbib.classloader.ResourceHandle;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.ZipException;
 
 /**
  *
@@ -26,68 +20,20 @@ public class JarResourceLocation extends AbstractURLResourceLocation {
 
     private static final Logger logger = Logger.getLogger(JarResourceLocation.class.getName());
 
-    private JarFile jarFile;
-
-    private byte content[];
+    private final JarFile jarFile;
 
     public JarResourceLocation(URL codeSource, File cacheFile) throws IOException {
         super(codeSource);
-        try {
-            jarFile = new JarFile(cacheFile);
-        } catch (ZipException ze) {
-            // We get this exception on windows when the
-            // path to the jar file gets too long (Bug ID: 6374379)
-
-            try (InputStream is =  new FileInputStream(cacheFile)) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buffer = new byte[2048];
-                int bytesRead;
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    baos.write(buffer, 0, bytesRead);
-                }
-                this.content = baos.toByteArray();
-            }
-        }
+        this.jarFile = new JarFile(cacheFile);
     }
 
+    @Override
     public ResourceHandle getResourceHandle(String resourceName) {
-        if (jarFile != null) {
-            JarEntry jarEntry = jarFile.getJarEntry(resourceName);
-            if (jarEntry != null) {
-                try {
-                    return new JarResourceHandle(jarFile, jarEntry, getCodeSource());
-                } catch (MalformedURLException e) {
-                    logger.log(Level.FINE, e.getMessage(), e);
-                }
-            }
-        } else {
+        JarEntry jarEntry = jarFile.getJarEntry(resourceName);
+        if (jarEntry != null) {
             try {
-                final JarInputStream is = new JarInputStream(new ByteArrayInputStream(this.content));
-                JarEntry jarEntry;
-                while ((jarEntry = is.getNextJarEntry()) != null) {
-                    if (jarEntry.getName().equals(resourceName)) {
-                        try {
-                            return new JarEntryResourceHandle(jarEntry, is, getCodeSource());
-                        } catch (Exception e) {
-                            logger.log(Level.FINE, e.getMessage(), e);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                logger.log(Level.FINE, e.getMessage(), e);
-            }
-        }
-        return null;
-    }
-
-    public Manifest getManifest() throws IOException {
-        if (jarFile != null) {
-            return jarFile.getManifest();
-        } else {
-            try {
-                JarInputStream is = new JarInputStream(new ByteArrayInputStream(this.content));
-                return is.getManifest();
-            } catch (IOException e) {
+                return new JarResourceHandle(jarFile, jarEntry, getCodeSource());
+            } catch (MalformedURLException e) {
                 logger.log(Level.FINE, e.getMessage(), e);
             }
         }
@@ -95,13 +41,16 @@ public class JarResourceLocation extends AbstractURLResourceLocation {
     }
 
     @Override
+    public Manifest getManifest() throws IOException {
+       return jarFile.getManifest();
+    }
+
+    @Override
     public void close() {
-        if (jarFile != null) {
-            try {
-                jarFile.close();
-            } catch (Exception e) {
-                logger.log(Level.FINE, e.getMessage(), e);
-            }
+        try {
+            jarFile.close();
+        } catch (Exception e) {
+            logger.log(Level.FINE, e.getMessage(), e);
         }
     }
 }

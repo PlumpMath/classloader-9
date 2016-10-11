@@ -11,10 +11,8 @@ import java.util.NoSuchElementException;
  */
 public class ResourceEnumeration implements Enumeration<URL> {
 
-    private Iterator<ResourceLocation> iterator;
-
     private final String resourceName;
-
+    private Iterator<ResourceLocation> iterator;
     private URL next;
 
     public ResourceEnumeration(Collection<ResourceLocation> resourceLocations, String resourceName) {
@@ -25,20 +23,20 @@ public class ResourceEnumeration implements Enumeration<URL> {
     @Override
     public boolean hasMoreElements() {
         fetchNext();
-        return (next != null);
+        return next != null;
     }
 
     @Override
     public URL nextElement() {
         fetchNext();
         // save next into a local variable and clear the next field
-        URL next = this.next;
+        URL url = this.next;
         this.next = null;
         // if we didn't have a next throw an exception
-        if (next == null) {
+        if (url == null) {
             throw new NoSuchElementException();
         }
-        return next;
+        return url;
     }
 
     private void fetchNext() {

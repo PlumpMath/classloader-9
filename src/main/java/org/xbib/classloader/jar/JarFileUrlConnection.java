@@ -10,7 +10,6 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.security.Permission;
 import java.security.cert.Certificate;
-import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -21,11 +20,12 @@ import java.util.jar.Manifest;
  */
 public class JarFileUrlConnection extends JarURLConnection {
 
-    public static final URL DUMMY_JAR_URL;
+    private static final URL DUMMY_JAR_URL;
 
     static {
         try {
             DUMMY_JAR_URL = new URL("jar", "", -1, "file:dummy!/", new URLStreamHandler() {
+                @Override
                 protected URLConnection openConnection(URL u) {
                     throw new UnsupportedOperationException();
                 }
@@ -35,7 +35,7 @@ public class JarFileUrlConnection extends JarURLConnection {
         }
     }
 
-    private final URL url;
+    private final URL jarUrl;
 
     private final JarFile jarFile;
 
@@ -43,12 +43,9 @@ public class JarFileUrlConnection extends JarURLConnection {
 
     private final URL jarFileUrl;
 
-    public JarFileUrlConnection(URL url, JarFile jarFile, JarEntry jarEntry) throws MalformedURLException {
+    public JarFileUrlConnection(URL jarUrl, JarFile jarFile, JarEntry jarEntry) throws MalformedURLException {
         super(DUMMY_JAR_URL);
-        Objects.requireNonNull(url);
-        Objects.requireNonNull(jarFile);
-        Objects.requireNonNull(jarEntry);
-        this.url = url;
+        this.jarUrl = jarUrl;
         this.jarFile = jarFile;
         this.jarEntry = jarEntry;
         jarFileUrl = new File(jarFile.getName()).toURI().toURL();
@@ -65,6 +62,7 @@ public class JarFileUrlConnection extends JarURLConnection {
 
     @Override
     public synchronized void connect() {
+        // not used
     }
 
     @Override
@@ -104,7 +102,7 @@ public class JarFileUrlConnection extends JarURLConnection {
 
     @Override
     public URL getURL() {
-        return url;
+        return jarUrl;
     }
 
     @Override
@@ -128,12 +126,12 @@ public class JarFileUrlConnection extends JarURLConnection {
 
     @Override
     public Permission getPermission() throws IOException {
-        URL jarFileUrl = new File(jarFile.getName()).toURI().toURL();
-        return jarFileUrl.openConnection().getPermission();
+        URL url = new File(jarFile.getName()).toURI().toURL();
+        return url.openConnection().getPermission();
     }
 
     @Override
     public String toString() {
-        return JarFileUrlConnection.class.getName() + ":" + url;
+        return JarFileUrlConnection.class.getName() + ":" + jarUrl;
     }
 }

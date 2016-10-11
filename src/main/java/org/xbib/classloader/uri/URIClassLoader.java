@@ -18,6 +18,8 @@ import java.util.Enumeration;
 import java.util.jar.Attributes;
 import java.util.jar.Attributes.Name;
 import java.util.jar.Manifest;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Equivalent of java.net.URLClassloader but without bugs related to ill-formed
@@ -43,6 +45,8 @@ import java.util.jar.Manifest;
  * per-classloader JAR caching policy.
  */
 public final class URIClassLoader extends URLClassLoader {
+
+    private static final Logger logger = Logger.getLogger(URIClassLoader.class.getName());
 
     private final URIResourceFinder finder = new URIResourceFinder();
 
@@ -91,19 +95,15 @@ public final class URIClassLoader extends URLClassLoader {
     protected Class<?> findClass(final String name) throws ClassNotFoundException {
         try {
             return AccessController.doPrivileged((PrivilegedExceptionAction<Class<?>>) () -> {
-                String path = name.replace('.', '/').concat(".class");
-                ResourceHandle h = finder.getResource(path);
-                if (h != null) {
-                    try {
-                        return defineClass(name, h);
-                    } catch (IOException e) {
-                        throw new ClassNotFoundException(name, e);
-                    }
-                } else {
+                ResourceHandle h = finder.getResource(name.replace('.', '/').concat(".class"));
+                if (h == null) {
                     throw new ClassNotFoundException(name);
+                } else {
+                    return defineClass(name, h);
                 }
             }, acc);
         } catch (PrivilegedActionException pae) {
+            logger.log(Level.FINE, pae.getMessage(), pae);
             throw (ClassNotFoundException) pae.getException();
         }
     }
@@ -210,7 +210,7 @@ public final class URIClassLoader extends URLClassLoader {
      * Returns true if the specified package name is sealed according to the
      * given manifest.
      */
-    private boolean isSealed(String name, Manifest man) {
+    private boolean isPackageSealed(String name, Manifest man) {
         String path = name.replace('.', '/').concat("/");
         Attributes attr = man.getAttributes(path);
         String sealed = null;
@@ -240,7 +240,7 @@ public final class URIClassLoader extends URLClassLoader {
                 } else {
                     // make sure we are not attempting to seal the package
                     // at this code source URL
-                    ok = (man == null) || !isSealed(pkgname, man);
+                    ok = (man == null) || !isPackageSealed(pkgname, man);
                 }
                 if (!ok) {
                     throw new SecurityException("sealing violation: " + name);
@@ -260,9 +260,10 @@ public final class URIClassLoader extends URLClassLoader {
         return defineClass(name, b, 0, b.length, cs);
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("ClassLoader:");
+        sb.append("URIClassLoader:");
         for (URI uri : getURIs()) {
             sb.append("[").append(uri).append("]");
         }

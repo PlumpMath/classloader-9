@@ -47,7 +47,7 @@ public class DirectoryResourceLocation extends AbstractURLResourceLocation {
         try {
             String base = baseDir.getCanonicalPath();
             String relative = file.getCanonicalPath();
-            return (relative.startsWith(base));
+            return relative.startsWith(base);
         } catch (IOException e) {
             logger.log(Level.FINE, e.getMessage(), e);
             return false;
@@ -59,7 +59,7 @@ public class DirectoryResourceLocation extends AbstractURLResourceLocation {
         if (!manifestLoaded) {
             File manifestFile = new File(baseDir, "META-INF/MANIFEST.MF");
             if (manifestFile.isFile() && manifestFile.canRead()) {
-                try (FileInputStream in =  new FileInputStream(manifestFile)) {
+                try (FileInputStream in = new FileInputStream(manifestFile)) {
                     manifest = new Manifest(in);
                 }
             }

@@ -12,6 +12,7 @@ import java.util.jar.Manifest;
  */
 public abstract class AbstractResourceHandle implements ResourceHandle {
 
+    @Override
     public byte[] getBytes() throws IOException {
         try (InputStream inputStream = getInputStream()) {
             byte[] buffer = new byte[4096];

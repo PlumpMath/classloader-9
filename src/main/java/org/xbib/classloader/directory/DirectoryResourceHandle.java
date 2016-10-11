@@ -92,6 +92,7 @@ class DirectoryResourceHandle extends AbstractResourceHandle {
      *
      * @return null
      */
+    @Override
     public Certificate[] getCertificates() {
         return null;
     }
@@ -104,12 +105,12 @@ class DirectoryResourceHandle extends AbstractResourceHandle {
         }
 
         @Override
-        public int read(byte b[]) {
+        public int read(byte[] b) {
             return -1;
         }
 
         @Override
-        public int read(byte b[], int off, int len) {
+        public int read(byte[] b, int off, int len) {
             return -1;
         }
 
@@ -125,14 +126,17 @@ class DirectoryResourceHandle extends AbstractResourceHandle {
 
         @Override
         public void close() {
+            // empty
         }
 
         @Override
         public void mark(int readlimit) {
+            // empty
         }
 
         @Override
         public void reset() {
+            // empty
         }
 
         @Override

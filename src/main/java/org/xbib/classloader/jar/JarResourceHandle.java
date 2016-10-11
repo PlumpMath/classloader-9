@@ -32,26 +32,32 @@ public class JarResourceHandle extends AbstractResourceHandle {
         this.codeSource = codeSource;
     }
 
+    @Override
     public String getName() {
         return jarEntry.getName();
     }
 
+    @Override
     public URL getUrl() {
         return url;
     }
 
+    @Override
     public URL getCodeSourceUrl() {
         return codeSource;
     }
 
+    @Override
     public boolean isDirectory() {
         return jarEntry.isDirectory();
     }
 
+    @Override
     public InputStream getInputStream() throws IOException {
         return jarFile.getInputStream(jarEntry);
     }
 
+    @Override
     public int getContentLength() {
         return (int) jarEntry.getSize();
     }

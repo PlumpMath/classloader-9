@@ -26,11 +26,15 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  */
 class URIResourceFinder implements ResourceFinder {
+
+    private static final Logger logger = Logger.getLogger(URIResourceFinder.class.getName());
 
     private final Object lock = new Object();
 
@@ -126,7 +130,6 @@ class URIResourceFinder implements ResourceFinder {
     }
 
     private Map<URI, ResourceLocation> getClassPath() {
-        assert Thread.holdsLock(lock) : "This method can only be called while holding the lock";
         for (File file : watchedFiles) {
             if (file.canRead()) {
                 rebuildClassPath();
@@ -144,7 +147,6 @@ class URIResourceFinder implements ResourceFinder {
      * that file to appear.
      */
     private void rebuildClassPath() {
-        assert Thread.holdsLock(lock) : "This method can only be called while holding the lock";
         // copy all of the existing locations into a temp map and clear the class path
         Map<URI, ResourceLocation> existingJarFiles = new LinkedHashMap<>(classPath);
         classPath.clear();
@@ -162,6 +164,7 @@ class URIResourceFinder implements ResourceFinder {
                     try {
                         resourceLocation = createResourceLocation(uri.toURL(), cacheUri(uri));
                     } catch (FileNotFoundException e) {
+                        logger.log(Level.FINE, e.getMessage(), e);
                         // if this is a file URL, the file doesn't exist yet... watch to see if it appears later
                         if ("file".equals(uri.getScheme())) {
                             File file = new File(uri.getPath());
@@ -170,11 +173,13 @@ class URIResourceFinder implements ResourceFinder {
 
                         }
                     } catch (IOException ignored) {
+                        logger.log(Level.FINE, ignored.getMessage(), ignored);
                         // can't seem to open the file... this is most likely a bad jar file
                         // so don't keep a watch out for it because that would require lots of checking
                         // Dain: We may want to review this decision later
                         continue;
                     } catch (UnsupportedOperationException ex) {
+                        logger.log(Level.FINE, ex.getMessage(), ex);
                         // the protocol for the JAR file's URL is not supported.  This can occur when
                         // the jar file is embedded in an EAR or CAR file.
                         continue;
@@ -186,6 +191,7 @@ class URIResourceFinder implements ResourceFinder {
                         classPath.put(resourceLocation.getCodeSource().toURI(), resourceLocation);
                     }
                 } catch (URISyntaxException ex) {
+                    logger.log(Level.FINE, ex.getMessage(), ex);
                     // ignore
                 }
                 // push the manifest classpath on the stack (make sure to maintain the order)
@@ -194,7 +200,7 @@ class URIResourceFinder implements ResourceFinder {
                     locationStack.addAll(0, manifestClassPath);
                 }
             }
-        } catch (Error e) {
+        } catch (Exception e) {
             destroy();
             throw e;
         }
@@ -205,15 +211,14 @@ class URIResourceFinder implements ResourceFinder {
 
     private File cacheUri(URI uri) throws IOException {
         if (!"file".equals(uri.getScheme())) {
-            // download the jar
-            throw new UnsupportedOperationException("Only local file jars are supported " + uri);
+            throw new UnsupportedOperationException("only local file jars are supported " + uri);
         }
         File file = new File(uri.getPath());
         if (!file.exists()) {
             throw new FileNotFoundException(file.getAbsolutePath());
         }
         if (!file.canRead()) {
-            throw new IOException("File is not readable: " + file.getAbsolutePath());
+            throw new IOException("file is not readable: " + file.getAbsolutePath());
         }
         return file;
     }
@@ -223,7 +228,7 @@ class URIResourceFinder implements ResourceFinder {
             throw new FileNotFoundException(cacheFile.getAbsolutePath());
         }
         if (!cacheFile.canRead()) {
-            throw new IOException("File is not readable: " + cacheFile.getAbsolutePath());
+            throw new IOException("file is not readable: " + cacheFile.getAbsolutePath());
         }
         return cacheFile.isDirectory() ?
                 // DirectoryResourceLocation will only return "file" URLs within this directory
@@ -234,35 +239,38 @@ class URIResourceFinder implements ResourceFinder {
 
     private List<URI> getManifestClassPath(ResourceLocation resourceLocation) {
         List<URI> classPathUrls = new LinkedList<>();
+        Manifest manifest = null;
         try {
             // get the manifest, if possible
-            Manifest manifest = resourceLocation.getManifest();
-            if (manifest == null) {
-                // some locations don't have a manifest
-                return classPathUrls;
-            }
-            // get the class-path attribute, if possible
-            String manifestClassPath = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
-            if (manifestClassPath == null) {
-                return classPathUrls;
-            }
-            // build the uris...
-            // the class-path attribute is space delimited
-            URL codeSource = resourceLocation.getCodeSource();
-            for (StringTokenizer tokenizer = new StringTokenizer(manifestClassPath, " "); tokenizer.hasMoreTokens(); ) {
-                String entry = tokenizer.nextToken();
-                try {
-                    // the class path entry is relative to the resource location code source
-                    URL entryUrl = new URL(codeSource, entry);
-                    classPathUrls.add(entryUrl.toURI());
-                } catch (MalformedURLException | URISyntaxException ignored) {
-                    // most likely a poorly named entry
-                }
-            }
-            return classPathUrls;
+            manifest = resourceLocation.getManifest();
         } catch (IOException ignored) {
+            logger.log(Level.FINE, ignored.getMessage(), ignored);
             // error opening the manifest
             return classPathUrls;
         }
+        if (manifest == null) {
+            // some locations don't have a manifest
+            return classPathUrls;
+        }
+        // get the class-path attribute, if possible
+        String manifestClassPath = manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH);
+        if (manifestClassPath == null) {
+            return classPathUrls;
+        }
+        // build the uris...
+        // the class-path attribute is space delimited
+        URL codeSource = resourceLocation.getCodeSource();
+        for (StringTokenizer tokenizer = new StringTokenizer(manifestClassPath, " "); tokenizer.hasMoreTokens(); ) {
+            String entry = tokenizer.nextToken();
+            try {
+                // the class path entry is relative to the resource location code source
+                URL entryUrl = new URL(codeSource, entry);
+                classPathUrls.add(entryUrl.toURI());
+            } catch (MalformedURLException | URISyntaxException ignored) {
+                logger.log(Level.FINE, ignored.getMessage(), ignored);
+                // most likely a poorly named entry
+            }
+        }
+        return classPathUrls;
     }
 }

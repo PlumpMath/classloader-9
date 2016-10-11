@@ -48,6 +48,8 @@ allprojects {
             exceptionFormat = 'full'
         }
     }
+    test.dependsOn(':jar')
+
     tasks.withType(FindBugs) {
         ignoreFailures = true
         reports {
@@ -88,7 +90,12 @@ allprojects {
             property "sonar.junit.reportsPath", "build/test-results/test/"
         }
     }
-
+    jar {
+        manifest {
+            mainAttributes('Sealed': true)
+            attributes("Class-Path": configurations.compile.collect { it.getName() }.join(' '))
+        }
+    }
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier 'sources'
         from sourceSets.main.allSource
