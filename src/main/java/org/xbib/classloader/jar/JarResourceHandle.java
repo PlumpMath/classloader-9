@@ -15,7 +15,7 @@ import java.util.jar.Manifest;
 /**
  *
  */
-public class JarResourceHandle extends AbstractResourceHandle {
+class JarResourceHandle extends AbstractResourceHandle {
 
     private final JarFile jarFile;
 
@@ -25,7 +25,7 @@ public class JarResourceHandle extends AbstractResourceHandle {
 
     private final URL codeSource;
 
-    public JarResourceHandle(JarFile jarFile, JarEntry jarEntry, URL codeSource) throws MalformedURLException {
+    JarResourceHandle(JarFile jarFile, JarEntry jarEntry, URL codeSource) throws MalformedURLException {
         this.jarFile = jarFile;
         this.jarEntry = jarEntry;
         this.url = JarFileUrlStreamHandler.createURL(jarFile, jarEntry, codeSource);

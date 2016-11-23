@@ -1,5 +1,8 @@
 package org.xbib.classloader;
 
+/**
+ *
+ */
 public class MacNativeLibraryLoader {
 
     public MacNativeLibraryLoader() {

@@ -11,7 +11,7 @@ import java.util.jar.Manifest;
 /**
  * This is a handle (a connection) to some resource, which may
  * be a class, native library, text file, image, etc. Handles are returned
- * by a ResourceFinder. A resource handle allows easy access to the resource data
+ * by a {@link ResourceFinder}. A resource handle allows easy access to the resource data
  * (using methods {@link #getInputStream} or {@link #getBytes}) as well as
  * access resource metadata, such as attributes, certificates, etc.
  * As soon as the handle is no longer in use, it should be explicitly

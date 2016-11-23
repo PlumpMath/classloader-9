@@ -46,19 +46,6 @@ class URIResourceFinder implements ResourceFinder {
 
     private boolean destroyed = false;
 
-    private void destroy() {
-        synchronized (lock) {
-            if (destroyed) {
-                return;
-            }
-            destroyed = true;
-            uris.clear();
-            for (ResourceLocation resourceLocation : classPath.values()) {
-                resourceLocation.close();
-            }
-            classPath.clear();
-        }
-    }
 
     @Override
     public ResourceHandle getResource(String resourceName) {
@@ -239,7 +226,7 @@ class URIResourceFinder implements ResourceFinder {
 
     private List<URI> getManifestClassPath(ResourceLocation resourceLocation) {
         List<URI> classPathUrls = new LinkedList<>();
-        Manifest manifest = null;
+        Manifest manifest;
         try {
             // get the manifest, if possible
             manifest = resourceLocation.getManifest();
@@ -272,5 +259,19 @@ class URIResourceFinder implements ResourceFinder {
             }
         }
         return classPathUrls;
+    }
+
+    private void destroy() {
+        synchronized (lock) {
+            if (destroyed) {
+                return;
+            }
+            destroyed = true;
+            uris.clear();
+            for (ResourceLocation resourceLocation : classPath.values()) {
+                resourceLocation.close();
+            }
+            classPath.clear();
+        }
     }
 }

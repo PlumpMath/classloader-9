@@ -79,10 +79,8 @@ public class ClassLoaderTest {
         jarFileUrlConnection.getMainAttributes();
         jarFileUrlConnection.getCertificates();
         jarFileUrlConnection.getPermission();
-        //jarFileUrlConnection.getContent(); // unknown service
         jarFileUrlConnection.getContentLength();
         jarFileUrlConnection.getInputStream();
-        //jarFileUrlConnection.getOutputStream(); // protocol doesn't support output
         jarFileUrlConnection.getURL();
         assertNotNull(jarFileUrlConnection.toString());
     }
@@ -114,7 +112,7 @@ public class ClassLoaderTest {
             Object o = cl.newInstance(); // we can instantiate but not cast
             assertEquals("class org.xbib.classloader.MacNativeLibraryLoader", o.getClass().toString());
         } else {
-            System.err.println(System.getProperty("os.name"));
+            System.err.println("still to do, test for " + System.getProperty("os.name"));
         }
     }
 

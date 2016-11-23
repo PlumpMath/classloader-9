@@ -6,7 +6,7 @@ import java.util.Enumeration;
 /**
  * Abstraction of resource searching policy. Given resource name, the resource
  * finder performs implementation-specific lookup, and, if it is able to locate
- * the resource, returns the {@link AbstractResourceHandle handle(s)} or URL(s)
+ * the resource, returns the {@link ResourceHandle handle(s)} or URL(s)
  * of it.
  */
 public interface ResourceFinder {
@@ -29,7 +29,7 @@ public interface ResourceFinder {
 
     /**
      * Get the resource by name and, if found, open connection to it and return
-     * the {@link AbstractResourceHandle handle} of it.
+     * the {@link ResourceHandle handle} of it.
      *
      * @param name the resource name
      * @return resource handle or null if resource was not found
